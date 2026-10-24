@@ -28,7 +28,7 @@ public class SberBank {
 
         driver = new FirefoxDriver(options);
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(100));
 
         wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofSeconds(20000));
 
@@ -87,25 +87,44 @@ public class SberBank {
 
     @Test
     public void formNegativeTest() throws InterruptedException {
-        String fieldXPath = "//input[@id='%s']";
-        fillInputField(driver.findElement(By.xpath("//*[@id=\"firstName\"]")), "Иван");
+        WebElement submit = null;
+        submit = driver.findElement(By.xpath("//*[@id=\"submit\"]"));
+        scrollToElementJs(submit);
+        waitUtilElementToBeClickable(submit);
+        Thread.sleep(10000);
+        submit.click();
 
-        // --bs-form-invalid-border-color: #dc3545;
-        // Practice Form
-        //driver.navigate().to("\"https://www.sberbank.ru/ru/person\""); - с сохранением истории
-        //driver.getTitle(); -
-        //driver.findElement();
-        // -> //div[contains(text(),'Для семьи')] поиск пути в Elements devTools
-//        Thread.sleep(10000); // timer
-//        wait.until(ExpectedConditions.visibilityOfAllElements( ))
+        WebElement name = driver.findElement(By.xpath("//*[@id=\"firstName\"]"));
+        System.out.println(name.getCssValue("border-color"));
+        Assert.assertTrue("Not red", name.getCssValue("border-color").equals("rgb(220, 93, 106)"));
 
-        // Пример поиска элемента "выше" надписи "//span[contains(text(), 'Меню')]/.."
-        // Пример поиска элемента надписи "//h1[contains(text(), 'Practice Form')]"
 
-        WebElement baseMenu = null;
-        baseMenu = driver.findElement(By.xpath("//h1[contains(text(), 'Practice Form')]"));
-        Assert.assertTrue("No lable: 'Practice Form'", baseMenu.getText().contains("Practice Form"));
-        // baseMenu.click(); - нажатие на кнопку
+//        String fieldXPath = "//input[@id='%s']";
+//
+//        WebElement name = driver.findElement(By.xpath("//*[@id=\"firstName\"]"));
+//        fillInputField(name, "Иванов");
+//        // Assert.assertTrue("No green", name.getCssValue("border-color").equals("var(--bs-form-valid-border-color)"));
+//
+//        fillInputField(driver.findElement(By.xpath("//*[@id=\"lastName\"]")), "Иванов");
+//        fillInputField(driver.findElement(By.xpath("//*[@id=\"userEmail\"]")), "ivanov@mail.ru");
+//
+//        WebElement gender = null;
+//        gender = driver.findElement(By.xpath("//*[@id=\"gender-radio-1\"]"));
+//        gender.click();
+//
+//        fillInputField(driver.findElement(By.xpath("//*[@id=\"userNumber\"]")), "1234567890");
+//
+//        WebElement hobbies = null;
+//        hobbies = driver.findElement(By.xpath("//*[@id=\"hobbies-checkbox-3\"]"));
+//        hobbies.click();
+//
+//        WebElement submit = null;
+//        submit = driver.findElement(By.xpath("//*[@id=\"submit\"]"));
+//        submit.click();
+//
+//        WebElement success = null;
+//        success = driver.findElement(By.xpath("//*[@id=\"example-modal-sizes-title-lg\"]"));
+//        Assert.assertTrue("No success", success.getText().contains("Thanks for submitting the form"));
     }
 
     @After
@@ -177,5 +196,17 @@ public class SberBank {
         Assert.assertEquals("Проверка ошибки у поля не была пройдена",
                 errorMessage, element.getText());
     }
+
+    // --bs-form-invalid-border-color: #dc3545;
+    // Practice Form
+    //driver.navigate().to("\"https://www.sberbank.ru/ru/person\""); - с сохранением истории
+    //driver.getTitle(); -
+    //driver.findElement();
+    // -> //div[contains(text(),'Для семьи')] поиск пути в Elements devTools
+//        Thread.sleep(10000); // timer
+//        wait.until(ExpectedConditions.visibilityOfAllElements( ))
+
+    // Пример поиска элемента "выше" надписи "//span[contains(text(), 'Меню')]/.."
+    // Пример поиска элемента надписи "//h1[contains(text(), 'Practice Form')]"
 
 }
