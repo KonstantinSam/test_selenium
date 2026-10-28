@@ -30,29 +30,75 @@ public class SberBank {
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(100));
 
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofSeconds(20000));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofSeconds(30000));
 
         driver.manage().window().maximize(); // делаем на весь экран браузер
         driver.get("https://demoqa.com/automation-practice-form"); // переходим на тестируемый сайт
     }
 
     @Test
+    public void auth() {
+        //негативный тест авторизации
+        int randomLoginPart = (int) (Math.random() * 10001);
+        driver.get("https://demoqa.com/login"); //
+        WebElement loginButton = driver.findElement(By.xpath("//*[@id=\"login\"]"));
+        WebElement toRegisterFormButton = driver.findElement(By.xpath("//*[@id=\"newUser\"]"));
+
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"userName\"]")), "test"+ randomLoginPart);
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"password\"]")), "test"+ randomLoginPart);
+
+        loginButton.click();
+
+        WebElement authError = driver.findElement(By.xpath("//*[@id=\"name\"]"));
+        waitUtilElementToBeVisible(authError);
+
+        //проверка на существование логина
+        Assert.assertTrue("Авторизация прошла успешно", authError.getText().contains("Invalid username or password!"));
+
+        //----попытка регистрации----
+        waitUtilElementToBeVisibleBack(driver.findElement(By.xpath("//*[@id=\"newUser\"]"))).click();
+
+        waitUtilElementToBeVisible(driver.findElement(By.xpath("//*[@id=\"firstname\"]")));
+
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"firstname\"]")), "test"+ randomLoginPart);
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"lastname\"]")), "test"+ randomLoginPart);
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"userName\"]")), "test"+ randomLoginPart);
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"password\"]")), "test"+ randomLoginPart);
+
+        WebElement registerButton = driver.findElement(By.xpath("//*[@id=\"register\"]"));
+        registerButton.click();
+
+        authError = driver.findElement(By.xpath("//*[@id=\"name\"]"));
+        waitUtilElementToBeVisible(authError);
+
+        //негативный тест регистрации - дальше не пускает капча
+        Assert.assertTrue("КАПЧА ПУСТИЛА????", authError.getText().contains("Please verify reCaptcha to register!"));
+
+        //--------
+        // назад к авторизации (позитивный сценарий)
+        WebElement backToLoginButton = driver.findElement(By.xpath("//*[@id=\"gotologin\"]"));
+        waitUtilElementToBeVisible(backToLoginButton);
+        backToLoginButton.click();
+
+        waitUtilElementToBeVisible(driver.findElement(By.xpath("//*[@id=\"userName\"]")));
+
+        // заранее зарегистрированный пользователь
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"userName\"]")), "Test6190%");
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"password\"]")), "Test6190%");
+
+
+        waitUtilElementToBeVisibleBack(driver.findElement(By.xpath("//*[@id=\"login\"]"))).click();
+
+        // отобразился профиль пользователя книжного магазина
+        Assert.assertTrue("нет ошибки - пользователь существует?", waitUtilElementToBeVisibleBack(driver
+                .findElement(By.xpath("//*[@id=\"userName-value\"]"))).getText().contains("Test6190%"));
+    }
+
+    @Test
     public void findTitleTest() throws InterruptedException {
-        // Practice Form
-        //driver.navigate().to("\"https://www.sberbank.ru/ru/person\""); - с сохранением истории
-        //driver.getTitle(); -
-        //driver.findElement();
-        // -> //div[contains(text(),'Для семьи')] поиск пути в Elements devTools
-//        Thread.sleep(10000); // timer
-//        wait.until(ExpectedConditions.visibilityOfAllElements( ))
-
-        // Пример поиска элемента "выше" надписи "//span[contains(text(), 'Меню')]/.."
-        // Пример поиска элемента надписи "//h1[contains(text(), 'Practice Form')]"
-
         WebElement baseMenu = null;
         baseMenu = driver.findElement(By.xpath("//h1[contains(text(), 'Practice Form')]"));
         Assert.assertTrue("No lable: 'Practice Form'", baseMenu.getText().contains("Practice Form"));
-        // baseMenu.click(); - нажатие на кнопку
     }
 
     @Test
@@ -75,6 +121,11 @@ public class SberBank {
         WebElement hobbies = null;
         hobbies = driver.findElement(By.xpath("//*[@id=\"hobbies-checkbox-3\"]"));
         hobbies.click();
+        //chooseAnyOption(By.id("state"));
+        //chooseAnyOption(By.id("city"));
+
+        selectOption(By.id("state"), "Haryana");
+        selectOption(By.id("city"), "Karnal");
 
         WebElement submit = null;
         submit = driver.findElement(By.xpath("//*[@id=\"submit\"]"));
@@ -87,6 +138,12 @@ public class SberBank {
 
     @Test
     public void formNegativeTest() throws InterruptedException {
+        String fieldXPath = "//input[@id='%s']";
+        fillInputField(driver.findElement(By.xpath("//*[@id=\"firstName\"]")), "Иван");
+
+        String oldColor = driver.findElement(By.xpath("//*[@id=\"lastName\"]"))
+                .getCssValue("border-color");
+
         WebElement submit = null;
         submit = driver.findElement(By.xpath("//*[@id=\"submit\"]"));
         scrollToElementJs(submit);
@@ -94,37 +151,19 @@ public class SberBank {
         Thread.sleep(10000);
         submit.click();
 
-        WebElement name = driver.findElement(By.xpath("//*[@id=\"firstName\"]"));
-        System.out.println(name.getCssValue("border-color"));
-        Assert.assertTrue("Not red", name.getCssValue("border-color").equals("rgb(220, 93, 106)"));
+        waitUtilElementToBeVisible(driver.findElement(By.xpath("//*[@id=\"lastName\"]")));
+        Thread.sleep(10000);
 
-
-//        String fieldXPath = "//input[@id='%s']";
-//
-//        WebElement name = driver.findElement(By.xpath("//*[@id=\"firstName\"]"));
-//        fillInputField(name, "Иванов");
-//        // Assert.assertTrue("No green", name.getCssValue("border-color").equals("var(--bs-form-valid-border-color)"));
-//
-//        fillInputField(driver.findElement(By.xpath("//*[@id=\"lastName\"]")), "Иванов");
-//        fillInputField(driver.findElement(By.xpath("//*[@id=\"userEmail\"]")), "ivanov@mail.ru");
-//
-//        WebElement gender = null;
-//        gender = driver.findElement(By.xpath("//*[@id=\"gender-radio-1\"]"));
-//        gender.click();
-//
-//        fillInputField(driver.findElement(By.xpath("//*[@id=\"userNumber\"]")), "1234567890");
-//
-//        WebElement hobbies = null;
-//        hobbies = driver.findElement(By.xpath("//*[@id=\"hobbies-checkbox-3\"]"));
-//        hobbies.click();
-//
-//        WebElement submit = null;
-//        submit = driver.findElement(By.xpath("//*[@id=\"submit\"]"));
-//        submit.click();
-//
-//        WebElement success = null;
-//        success = driver.findElement(By.xpath("//*[@id=\"example-modal-sizes-title-lg\"]"));
-//        Assert.assertTrue("No success", success.getText().contains("Thanks for submitting the form"));
+        Assert.assertNotEquals("Цвет не поменялся", driver.findElement(By.xpath("//*[@id=\"lastName\"]"))
+                .getCssValue("border-color"), oldColor);
+        Assert.assertNotEquals("Цвет не поменялся", driver.findElement(By.xpath("//*[@id=\"gender-radio-1\"]"))
+                .getCssValue("border-color"),oldColor);
+        Assert.assertNotEquals("Цвет не поменялся", driver.findElement(By.xpath("//*[@id=\"gender-radio-2\"]"))
+                .getCssValue("border-color"),oldColor);
+        Assert.assertNotEquals("Цвет не поменялся", driver.findElement(By.xpath("//*[@id=\"gender-radio-3\"]"))
+                .getCssValue("border-color"),oldColor);
+        Assert.assertNotEquals("Цвет не поменялся", driver.findElement(By.xpath("//*[@id=\"userNumber\"]"))
+                .getCssValue("border-color"),oldColor);
     }
 
     @After
@@ -169,6 +208,10 @@ public class SberBank {
         wait.until(ExpectedConditions.visibilityOf(element));
     }
 
+    private WebElement waitUtilElementToBeVisibleBack(WebElement element) {
+        return wait.until(ExpectedConditions.visibilityOf(element));
+    }
+
     /**
      * Заполнение полей определённым значений
      *
@@ -197,16 +240,25 @@ public class SberBank {
                 errorMessage, element.getText());
     }
 
-    // --bs-form-invalid-border-color: #dc3545;
-    // Practice Form
-    //driver.navigate().to("\"https://www.sberbank.ru/ru/person\""); - с сохранением истории
-    //driver.getTitle(); -
-    //driver.findElement();
-    // -> //div[contains(text(),'Для семьи')] поиск пути в Elements devTools
-//        Thread.sleep(10000); // timer
-//        wait.until(ExpectedConditions.visibilityOfAllElements( ))
+    private void chooseAnyOption(By control) {
+        driver.findElement(control).click();
 
-    // Пример поиска элемента "выше" надписи "//span[contains(text(), 'Меню')]/.."
-    // Пример поиска элемента надписи "//h1[contains(text(), 'Practice Form')]"
+        WebElement option = wait.until(
+                ExpectedConditions.elementToBeClickable(
+                        By.cssSelector("[role='option']")
+                )
+        );
+        option.click();
+    }
+
+    private void selectOption(By control, String optionText) {
+        driver.findElement(control).click();
+
+        By option = By.xpath(
+                "//*[@role='option' and normalize-space()='" + optionText + "']"
+        );
+
+        wait.until(ExpectedConditions.elementToBeClickable(option)).click();
+    }
 
 }
